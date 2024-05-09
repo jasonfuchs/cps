@@ -4,6 +4,7 @@ fn main() {
     let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
 
     println!("cargo:return-if-changed=src/wrapper.h");
+    println!("cargo:rustc-link-lib=pigpiod_if2");
 
     let binds = bindgen::builder()
         .header("src/wrapper.h")
