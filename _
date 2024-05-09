@@ -1,0 +1,13 @@
+BadSend
+BadRecv
+BadGetaddrinfo
+BadConnect
+BadSocket
+BadNoib
+DuplicateCallback
+BadMalloc
+BadCallback
+NotifyFailed
+CallbackNotFound
+UnconnectedPi
+TooManyPis

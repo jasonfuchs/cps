@@ -1,6 +1,5 @@
-workspace = { members = ["pigpiod_if-sys"] }
 [package]
-name = "cps"
+name = "pigpiod_if-sys"
 version = "0.1.0"
 edition = "2021"
 
