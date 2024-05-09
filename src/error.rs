@@ -1,6 +1,6 @@
 use std::ffi::{c_int, CStr};
 
-use pigpiod_if_sys::*;
+use pigpiod_if2::*;
 
 #[derive(Debug)]
 pub enum Error {

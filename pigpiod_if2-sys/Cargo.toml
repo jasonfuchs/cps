@@ -1,5 +1,5 @@
 [package]
-name = "pigpiod_if-sys"
+name = "pigpiod_if2-sys"
 version = "0.1.0"
 edition = "2021"
 
