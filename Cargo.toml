@@ -5,4 +5,5 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+anyhow = "1.0.83"
 pigpiod_if2 = { version = "0.1.0", path = "pigpiod_if2-sys", package = "pigpiod_if2-sys" }
