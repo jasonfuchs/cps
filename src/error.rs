@@ -1,4 +1,6 @@
-use std::ffi::c_int;
+use std::ffi::{c_int, CStr};
+
+use pigpiod_if_sys::*;
 
 #[derive(Debug)]
 pub enum Error {
@@ -6,6 +8,8 @@ pub enum Error {
     Simple(ErrorKind),
     Custom(Box<Custom>),
 }
+
+pub type Result<T, E = Error> = std::result::Result<T, E>;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub enum ErrorKind {
@@ -733,6 +737,6 @@ impl ErrorKind {
     }
 }
 
-fn pi_err_str(_code: c_int) -> &'static str {
-    todo!()
+fn pi_err_str(code: c_int) -> &'static str {
+    unsafe { CStr::from_ptr(pigpio_error(code)).to_str().unwrap() }
 }
