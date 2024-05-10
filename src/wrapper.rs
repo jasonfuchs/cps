@@ -1,6 +1,8 @@
 use std::ffi::CStr;
 
 // The all important wrapper
+//
+// Using the newtype pattern
 pub struct W<T>(pub T);
 
 impl std::fmt::Display for W<&CStr> {

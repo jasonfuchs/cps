@@ -2,6 +2,8 @@ use std::ffi::{c_int, CStr};
 
 use pigpiod_if2::*;
 
+use crate::wrapper::W;
+
 #[derive(Debug)]
 pub enum Error {
     Pi(c_int),
@@ -387,7 +389,10 @@ impl Error {
 impl std::fmt::Display for Error {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Pi(code) => write!(f, "{} (pi error {})", pi_err_str(*code), code),
+            Self::Pi(code) => {
+                let detail = unsafe { CStr::from_ptr(pigpio_error(*code)) };
+                write!(f, "{} (pi error {})", W(detail), code)
+            }
             Self::Simple(kind) => write!(f, "{}", kind.as_str()),
             Self::Custom(c) => c.error.fmt(f),
         }
@@ -735,8 +740,4 @@ impl ErrorKind {
             Self::Other => "unknown error",
         }
     }
-}
-
-fn pi_err_str(code: c_int) -> &'static str {
-    unsafe { CStr::from_ptr(pigpio_error(code)).to_str().unwrap() }
 }
