@@ -1,4 +1,4 @@
-use std::ffi::{c_char, c_int, c_uint, CStr, CString};
+use std::ffi::{c_char, c_int, c_uint, CString};
 
 use crate::prelude::*;
 
@@ -12,11 +12,19 @@ impl Pi {
     where
         A: Into<&'a str>,
     {
-        fn _new<'a>(addr: &'a str) -> Result<Pi> {
-            Pi::from_ptr(CString::new(addr)?.as_ptr(), std::ptr::null())
-        }
+        Self::_new(addr.into())
+    }
 
-        _new(addr.into())
+    fn _new<'a>(addr: &'a str) -> Result<Self> {
+        let addr_str = CString::new(addr)?;
+
+        let pi = unsafe { pigpio_start(addr_str.as_ptr(), std::ptr::null()) };
+
+        if pi < 0 {
+            Err(Error::Pi(pi))
+        } else {
+            Ok(Pi(pi))
+        }
     }
 
     pub fn with_port<'a, A, P>(addr: A, port: P) -> Result<Self>
@@ -24,18 +32,14 @@ impl Pi {
         A: Into<&'a str>,
         P: Into<u16>,
     {
-        fn _with_port<'a>(addr: &'a str, port: u16) -> Result<Pi> {
-            Pi::from_ptr(
-                CString::new(addr)?.as_ptr(),
-                CString::new(port.to_string())?.as_ptr(),
-            )
-        }
-
-        _with_port(addr.into(), port.into())
+        Self::_with_port(addr.into(), port.into())
     }
 
-    fn from_ptr(addr_str: *const c_char, port_str: *const c_char) -> Result<Self> {
-        let pi = unsafe { pigpio_start(addr_str, port_str) };
+    fn _with_port<'a>(addr: &'a str, port: u16) -> Result<Self> {
+        let addr_str = CString::new(addr)?;
+        let port_str = CString::new(port.to_string())?;
+
+        let pi = unsafe { pigpio_start(addr_str.as_ptr(), port_str.as_ptr()) };
 
         if pi < 0 {
             Err(Error::Pi(pi))
