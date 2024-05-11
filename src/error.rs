@@ -1,4 +1,7 @@
-use std::ffi::{c_int, CStr};
+use std::{
+    ffi::{c_int, CStr, NulError},
+    str::Utf8Error,
+};
 
 use pigpiod_if2::*;
 
@@ -9,6 +12,18 @@ pub enum Error {
     Pi(c_int),
     Simple(ErrorKind),
     Custom(Box<Custom>),
+}
+
+impl From<NulError> for Error {
+    fn from(value: NulError) -> Self {
+        Self::other(value)
+    }
+}
+
+impl From<Utf8Error> for Error {
+    fn from(value: Utf8Error) -> Self {
+        Self::other(value)
+    }
 }
 
 pub type Result<T, E = Error> = std::result::Result<T, E>;
