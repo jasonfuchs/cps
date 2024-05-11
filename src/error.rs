@@ -5,7 +5,7 @@ use std::{
 
 use pigpiod_if2::*;
 
-use crate::wrapper::W;
+use crate::wrapper::Wrap;
 
 #[derive(Debug)]
 pub enum Error {
@@ -406,7 +406,7 @@ impl std::fmt::Display for Error {
         match self {
             Self::Pi(code) => {
                 let detail = unsafe { CStr::from_ptr(pigpio_error(*code)) };
-                write!(f, "{} (pi error {})", W(detail), code)
+                write!(f, "{} (pi error {})", detail.wrap(), code)
             }
             Self::Simple(kind) => write!(f, "{}", kind.as_str()),
             Self::Custom(c) => c.error.fmt(f),

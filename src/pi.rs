@@ -1,4 +1,4 @@
-use std::ffi::{c_char, c_int, c_uint, CString};
+use std::ffi::{c_int, c_uint, CString};
 
 use crate::prelude::*;
 
@@ -66,5 +66,11 @@ impl Pi {
         }
 
         Ok(())
+    }
+}
+
+impl Drop for Pi {
+    fn drop(&mut self) {
+        unsafe { pigpio_stop(dbg!(self).0) }
     }
 }
