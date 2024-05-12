@@ -45,8 +45,21 @@ impl<const N: usize> ShiftRegister<N> {
         self.strobe_high(self.st_cp)
     }
 
-    pub fn shift_byte(&self, _value: u8) -> Result<()> {
-        todo!()
+    pub fn reset(&self) -> Result<()> {
+        self.shift_n_bytes([0; N])
+    }
+
+    pub fn shift_byte(&self, value: u8) -> Result<()> {
+        const MASK: u8 = 1;
+
+        for i in (0..8).rev() {
+            let bit = (value >> i) & MASK;
+
+            self.pi.gpio_write(self.ds, bit.into())?;
+            self.shift()?;
+        }
+
+        Ok(())
     }
 
     pub fn shift_n_bytes(&self, value: [u8; N]) -> Result<()> {
