@@ -81,14 +81,7 @@ impl<const N: usize, Addr, Port, Ds, ShCp, StCp>
         }
     }
 
-    pub fn port<P>(self, port: P) -> ShiftRegisterBuilder<N, Addr, u16, Ds, ShCp, StCp>
-    where
-        P: Into<u16>,
-    {
-        self._port(port.into())
-    }
-
-    fn _port(self, port: u16) -> ShiftRegisterBuilder<N, Addr, u16, Ds, ShCp, StCp> {
+    pub fn port(self, port: u16) -> ShiftRegisterBuilder<N, Addr, u16, Ds, ShCp, StCp> {
         let Self {
             addr,
             ds,
@@ -106,14 +99,7 @@ impl<const N: usize, Addr, Port, Ds, ShCp, StCp>
         }
     }
 
-    pub fn ds<D>(self, ds: D) -> ShiftRegisterBuilder<N, Addr, Port, c_uint, ShCp, StCp>
-    where
-        D: Into<c_uint>,
-    {
-        self._ds(ds.into())
-    }
-
-    fn _ds(self, ds: c_uint) -> ShiftRegisterBuilder<N, Addr, Port, c_uint, ShCp, StCp> {
+    pub fn ds(self, ds: c_uint) -> ShiftRegisterBuilder<N, Addr, Port, c_uint, ShCp, StCp> {
         let Self {
             addr,
             port,
@@ -131,14 +117,7 @@ impl<const N: usize, Addr, Port, Ds, ShCp, StCp>
         }
     }
 
-    pub fn sh_cp<S>(self, sh_cp: S) -> ShiftRegisterBuilder<N, Addr, Port, Ds, c_uint, StCp>
-    where
-        S: Into<c_uint>,
-    {
-        self._sh_cp(sh_cp.into())
-    }
-
-    fn _sh_cp(self, sh_cp: c_uint) -> ShiftRegisterBuilder<N, Addr, Port, Ds, c_uint, StCp> {
+    pub fn sh_cp(self, sh_cp: c_uint) -> ShiftRegisterBuilder<N, Addr, Port, Ds, c_uint, StCp> {
         let Self {
             addr,
             port,
@@ -156,14 +135,7 @@ impl<const N: usize, Addr, Port, Ds, ShCp, StCp>
         }
     }
 
-    pub fn st_cp<S>(self, st_cp: S) -> ShiftRegisterBuilder<N, Addr, Port, Ds, ShCp, c_uint>
-    where
-        S: Into<c_uint>,
-    {
-        self._st_cp(st_cp.into())
-    }
-
-    fn _st_cp(self, st_cp: c_uint) -> ShiftRegisterBuilder<N, Addr, Port, Ds, ShCp, c_uint> {
+    pub fn st_cp(self, st_cp: c_uint) -> ShiftRegisterBuilder<N, Addr, Port, Ds, ShCp, c_uint> {
         let Self {
             addr,
             port,

@@ -27,12 +27,11 @@ impl Pi {
         }
     }
 
-    pub fn with_port<'a, A, P>(addr: A, port: P) -> Result<Self>
+    pub fn with_port<'a, A>(addr: A, port: u16) -> Result<Self>
     where
         A: Into<&'a str>,
-        P: Into<u16>,
     {
-        Self::_with_port(addr.into(), port.into())
+        Self::_with_port(addr.into(), port)
     }
 
     fn _with_port<'a>(addr: &'a str, port: u16) -> Result<Self> {
