@@ -1,5 +1,7 @@
 use std::ffi::c_uint;
 
+use pigpiod_if2::*;
+
 use crate::prelude::*;
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -25,6 +27,34 @@ impl<const N: usize> ShiftRegister<N> {
 
     pub fn into_inner(self) -> Pi {
         self.pi
+    }
+
+    #[inline]
+    fn strobe_high(&self, gpio: c_uint) -> Result<()> {
+        self.pi.gpio_write(gpio, PI_LOW)?;
+        self.pi.gpio_write(gpio, PI_HIGH)?;
+
+        Ok(())
+    }
+
+    pub fn shift(&self) -> Result<()> {
+        self.strobe_high(self.sh_cp)
+    }
+
+    pub fn save(&self) -> Result<()> {
+        self.strobe_high(self.st_cp)
+    }
+
+    pub fn shift_byte(&self, _value: u8) -> Result<()> {
+        todo!()
+    }
+
+    pub fn shift_n_bytes(&self, value: [u8; N]) -> Result<()> {
+        for i in value {
+            self.shift_byte(i)?;
+        }
+
+        Ok(())
     }
 }
 
