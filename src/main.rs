@@ -15,16 +15,16 @@ fn main() -> Result<()> {
             pigpiod_if2::PI_FILE_READ,
         )?;
 
-        let content: String = file.read::<16>()?.chars().filter(|&c| c != '\n').collect();
+        let temp = file
+            .read::<16>()?
+            .chars()
+            .filter(|&c| c != '\n')
+            .collect::<String>()
+            .parse::<f32>()?
+            / 1000.0;
 
-        let milis: f32 = content.parse()?;
+        let width = temp.to_string().chars().take_while(|&c| c != '.').count();
 
-        let temp = milis / 1000.0;
-
-        let before_dot = temp.to_string().chars().take_while(|&c| c != '.').count();
-
-        sh_reg.display(format!("{:.width$}", temp, width = 4 - before_dot))?;
-
-        std::mem::drop(file);
+        sh_reg.display(format!("{:.width$}", temp, width = width))?;
     }
 }
