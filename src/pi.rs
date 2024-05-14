@@ -1,4 +1,7 @@
-use std::ffi::{c_int, c_uint, CString};
+use std::{
+    ffi::{c_char, c_int, c_uint, CString},
+    path::Path,
+};
 
 use crate::prelude::*;
 
@@ -66,10 +69,84 @@ impl Pi {
 
         Ok(())
     }
+
+    pub fn file_open<P>(&self, path: P, mode: c_uint) -> Result<File>
+    where
+        P: AsRef<Path>,
+    {
+        let path = CString::new(path.as_ref().to_str().ok_or(Error::other("invalid path"))?)?;
+
+        let handle = unsafe { file_open(self.0, path.as_ptr().cast_mut(), mode) };
+
+        if handle < 0 {
+            return Err(Error::Pi(handle));
+        }
+
+        let handle = handle as c_uint;
+
+        return Ok(File { handle, pi: &self });
+    }
+
+    pub fn file_read<const N: usize>(&self, file: &File, buf: &mut [c_char; N]) -> Result<()> {
+        let count = N as c_uint;
+
+        let result = unsafe { file_read(self.0, file.handle(), buf.as_mut_ptr(), count) };
+
+        if result < 0 {
+            return Err(Error::Pi(result));
+        }
+
+        Ok(())
+    }
+
+    pub fn file_close(&self, file: &File) -> Result<()> {
+        let result = unsafe { file_close(self.0, file.handle()) };
+
+        if result < 0 {
+            return Err(Error::Pi(result));
+        }
+
+        Ok(())
+    }
 }
 
 impl Drop for Pi {
     fn drop(&mut self) {
-        unsafe { pigpio_stop(dbg!(self).0) }
+        unsafe { pigpio_stop(self.0) }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct File<'a> {
+    handle: c_uint,
+    pi: &'a Pi,
+}
+
+impl<'a> File<'a> {
+    pub fn handle(&self) -> c_uint {
+        self.handle
+    }
+
+    pub fn read<const N: usize>(&self) -> Result<String> {
+        let mut buf: [c_char; N] = [0; N];
+
+        self.pi.file_read(self, &mut buf)?;
+
+        let content = unsafe {
+            CString::from_vec_unchecked(
+                buf.into_iter()
+                    .filter(|c| c != &0)
+                    .map(|c| c as u8)
+                    .collect(),
+            )
+        };
+
+        Ok(content.to_str()?.to_string())
+    }
+}
+
+impl<'a> Drop for File<'a> {
+    fn drop(&mut self) {
+        self.pi.file_close(self).unwrap()
     }
 }
