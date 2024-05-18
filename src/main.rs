@@ -27,14 +27,17 @@ fn main() -> anyhow::Result<()> {
 
         let width = 4 - temp.to_string().chars().take_while(|&c| c != '.').count();
 
-        sh_reg.display(format!("{:.width$}", temp, width = width))?;
+        sh_reg.display(format!("{temp:.width$}", width = width))?;
 
         {
             use cps::schema::temperatures::dsl::*;
 
-            diesel::insert_into(temperatures)
+            let row = diesel::insert_into(temperatures)
                 .values(NewTemperature::from(temp))
-                .execute(&mut conn)?;
+                .returning(Temperature::as_returning())
+                .get_result(&mut conn)?;
+
+            println!("{row}");
         }
     }
 }
