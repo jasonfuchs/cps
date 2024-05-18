@@ -2,8 +2,8 @@
 
 diesel::table! {
     temperatures (id) {
-        id -> Nullable<Integer>,
-        temperature -> Nullable<Float>,
-        created_at -> Nullable<Timestamp>,
+        id -> Integer,
+        temperature -> Float,
+        created_at -> Timestamp,
     }
 }

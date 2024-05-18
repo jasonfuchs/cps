@@ -1,5 +1,5 @@
 CREATE TABLE temperatures ( 
-    id INTEGER PRIMARY KEY,
-    temperature REAL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    id INTEGER PRIMARY KEY NOT NULL,
+    temperature REAL NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL
 )
