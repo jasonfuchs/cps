@@ -99,14 +99,7 @@ impl<const N: usize, Addr, Port, Ds, ShCp, StCp>
         }
     }
 
-    pub fn addr<'a, A>(self, addr: A) -> ShiftRegisterBuilder<N, &'a str, Port, Ds, ShCp, StCp>
-    where
-        A: Into<&'a str>,
-    {
-        self._addr(addr.into())
-    }
-
-    fn _addr<'a>(self, addr: &'a str) -> ShiftRegisterBuilder<N, &'a str, Port, Ds, ShCp, StCp> {
+    pub fn addr<'a>(self, addr: &'a str) -> ShiftRegisterBuilder<N, &'a str, Port, Ds, ShCp, StCp> {
         let Self {
             port,
             ds,
