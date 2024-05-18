@@ -23,7 +23,7 @@ fn main() -> Result<()> {
             .parse::<f32>()?
             / 1000.0;
 
-        let width = temp.to_string().chars().take_while(|&c| c != '.').count();
+        let width = 4 - temp.to_string().chars().take_while(|&c| c != '.').count();
 
         sh_reg.display(format!("{:.width$}", temp, width = width))?;
     }
