@@ -1,4 +1,5 @@
 pub mod error;
+pub mod models;
 pub mod pi;
 pub mod prelude;
 pub mod schema;
