@@ -8,6 +8,4 @@ edition = "2021"
 anyhow = "1.0.83"
 chrono = "0.4.38"
 diesel = { version = "2.1.6", default-features = false, features = ["sqlite", "chrono"] }
-iced = { version = "0.12.1", features = ["tokio"] }
 pigpiod_if2 = { version = "0.1.0", path = "pigpiod_if2-sys", package = "pigpiod_if2-sys" }
-tokio = { version = "1.37.0", features = ["rt", "tokio-macros"] }
