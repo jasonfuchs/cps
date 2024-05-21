@@ -1,6 +1,8 @@
 use std::{
     ffi::{c_char, c_int, c_uint, CString},
+    io, mem,
     path::Path,
+    ptr,
 };
 
 use crate::prelude::*;
@@ -11,39 +13,25 @@ use pigpiod_if2::*;
 pub struct Pi(c_int);
 
 impl Pi {
-    pub fn new<'a, A>(addr: A) -> Result<Self>
-    where
-        A: Into<&'a str>,
-    {
-        Self::_new(addr.into())
-    }
-
-    fn _new<'a>(addr: &'a str) -> Result<Self> {
+    pub fn new(addr: &str) -> Result<Self> {
         let addr_str = CString::new(addr)?;
 
-        let pi = unsafe { pigpio_start(addr_str.as_ptr(), std::ptr::null()) };
+        let pi = unsafe { pigpio_start(addr_str.as_ptr(), ptr::null()) };
 
-        if pi < 0 {
+        if pi.is_negative() {
             Err(Error::Pi(pi))
         } else {
             Ok(Pi(pi))
         }
     }
 
-    pub fn with_port<'a, A>(addr: A, port: u16) -> Result<Self>
-    where
-        A: Into<&'a str>,
-    {
-        Self::_with_port(addr.into(), port)
-    }
-
-    fn _with_port<'a>(addr: &'a str, port: u16) -> Result<Self> {
+    pub fn with_port(addr: &str, port: u16) -> Result<Self> {
         let addr_str = CString::new(addr)?;
         let port_str = CString::new(port.to_string())?;
 
         let pi = unsafe { pigpio_start(addr_str.as_ptr(), port_str.as_ptr()) };
 
-        if pi < 0 {
+        if pi.is_negative() {
             Err(Error::Pi(pi))
         } else {
             Ok(Pi(pi))
@@ -53,60 +41,64 @@ impl Pi {
     pub fn set_mode(&self, gpio: c_uint, mode: c_uint) -> Result<()> {
         let code = unsafe { set_mode(self.0, gpio, mode) };
 
-        if code < 0 {
-            return Err(Error::Pi(code));
+        if code.is_negative() {
+            Err(Error::Pi(code))
+        } else {
+            Ok(())
         }
-
-        Ok(())
     }
 
     pub fn gpio_write(&self, gpio: c_uint, level: c_uint) -> Result<()> {
         let code = unsafe { gpio_write(self.0, gpio, level) };
 
-        if code < 0 {
-            return Err(Error::Pi(code));
+        if code.is_negative() {
+            Err(Error::Pi(code))
+        } else {
+            Ok(())
         }
-
-        Ok(())
     }
 
-    pub fn file_open<P>(&self, path: P, mode: c_uint) -> Result<File>
+    pub fn file_open<T>(&self, path: T, mode: c_uint) -> Result<File>
     where
-        P: AsRef<Path>,
+        T: AsRef<Path>,
     {
-        let path = CString::new(path.as_ref().to_str().ok_or(Error::other("invalid path"))?)?;
+        let path = CString::new(
+            path.as_ref()
+                .to_str()
+                .ok_or(Error::other("failed to convert path"))?,
+        )?;
 
         let handle = unsafe { file_open(self.0, path.as_ptr().cast_mut(), mode) };
 
-        if handle < 0 {
-            return Err(Error::Pi(handle));
+        if handle.is_negative() {
+            Err(Error::Pi(handle))
+        } else {
+            Ok(File {
+                handle: handle as c_uint,
+                pi: self,
+            })
         }
-
-        let handle = handle as c_uint;
-
-        return Ok(File { handle, pi: &self });
     }
 
-    pub fn file_read<const N: usize>(&self, file: &File, buf: &mut [c_char; N]) -> Result<()> {
-        let count = N as c_uint;
+    pub fn file_read(&self, file: &File, buf: &mut [c_char]) -> Result<usize> {
+        let read =
+            unsafe { file_read(self.0, file.handle(), buf.as_mut_ptr(), buf.len() as c_uint) };
 
-        let result = unsafe { file_read(self.0, file.handle(), buf.as_mut_ptr(), count) };
-
-        if result < 0 {
-            return Err(Error::Pi(result));
+        if read.is_negative() {
+            return Err(Error::Pi(read));
+        } else {
+            Ok(read as usize)
         }
-
-        Ok(())
     }
 
     pub fn file_close(&self, file: &File) -> Result<()> {
         let result = unsafe { file_close(self.0, file.handle()) };
 
-        if result < 0 {
+        if result.is_negative() {
             return Err(Error::Pi(result));
+        } else {
+            Ok(())
         }
-
-        Ok(())
     }
 }
 
@@ -148,5 +140,13 @@ impl<'a> File<'a> {
 impl<'a> Drop for File<'a> {
     fn drop(&mut self) {
         self.pi.file_close(self).unwrap()
+    }
+}
+
+impl<'a> io::Read for File<'a> {
+    fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
+        self.pi
+            .file_read(self, unsafe { mem::transmute(buf) })
+            .map_err(|err| io::Error::other(err))
     }
 }

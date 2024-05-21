@@ -12,6 +12,12 @@ pub struct ShiftRegister<const N: usize> {
     st_cp: c_uint,
 }
 
+impl<const N: usize> Default for ShiftRegister<N> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<const N: usize> ShiftRegister<N> {
     pub fn new() -> Self {
         todo!()
@@ -99,7 +105,7 @@ impl<const N: usize, Addr, Port, Ds, ShCp, StCp>
         }
     }
 
-    pub fn addr<'a>(self, addr: &'a str) -> ShiftRegisterBuilder<N, &'a str, Port, Ds, ShCp, StCp> {
+    pub fn addr(self, addr: &str) -> ShiftRegisterBuilder<N, &str, Port, Ds, ShCp, StCp> {
         let Self {
             port,
             ds,

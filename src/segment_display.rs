@@ -71,9 +71,8 @@ impl<const N: usize, T: ToString> SegmentDisplay<N, T> for ShiftRegister<N> {
             }
         }
 
-        match current {
-            Some(current) => list.push_back(current),
-            _ => (),
+        if let Some(current) = current {
+            list.push_back(current)
         }
 
         while list.len() < N {
