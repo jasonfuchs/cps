@@ -127,13 +127,19 @@ impl<'a> File<'a> {
         let content = unsafe {
             CString::from_vec_unchecked(
                 buf.into_iter()
-                    .filter(|c| c != &0)
+                    .filter(|&c| c != 0)
                     .map(|c| c as u8)
                     .collect(),
             )
         };
 
         Ok(content.to_str()?.to_string())
+    }
+
+    pub fn read_vec(&self, n: usize) -> Result<Vec<c_char>> {
+        let mut buf = Vec::<c_char>::with_capacity(n);
+
+        todo!()
     }
 }
 

@@ -52,7 +52,7 @@ impl<const N: usize> ShiftRegister<N> {
     }
 
     pub fn reset(&self) -> Result<()> {
-        self.shift_n_bytes([0; N])
+        self.shift_n_bytes(&[0; N])
     }
 
     pub fn shift_byte(&self, value: u8) -> Result<()> {
@@ -68,9 +68,9 @@ impl<const N: usize> ShiftRegister<N> {
         Ok(())
     }
 
-    pub fn shift_n_bytes(&self, value: [u8; N]) -> Result<()> {
+    pub fn shift_n_bytes(&self, value: &[u8; N]) -> Result<()> {
         for i in value {
-            self.shift_byte(i)?;
+            self.shift_byte(*i)?;
         }
 
         Ok(())

@@ -25,7 +25,7 @@ pub trait SegmentDisplay<const N: usize, T> {
     fn display(&self, value: T) -> Result<()> {
         let arr = Self::parse(value)?;
 
-        self.shift_register().shift_n_bytes(arr)?;
+        self.shift_register().shift_n_bytes(&arr)?;
         self.shift_register().save()?;
 
         Ok(())
