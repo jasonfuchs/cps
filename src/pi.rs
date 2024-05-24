@@ -1,6 +1,6 @@
 use std::{
-    ffi::{c_char, c_int, c_uint, CString},
-    io, mem,
+    ffi::{c_int, c_uint, CString},
+    io,
     path::Path,
     ptr,
 };
@@ -13,7 +13,17 @@ use pigpiod_if2::*;
 pub struct Pi(c_int);
 
 impl Pi {
-    pub fn new(addr: &str) -> Result<Self> {
+    pub fn new() -> Result<Self> {
+        let pi = unsafe { pigpio_start(ptr::null(), ptr::null()) };
+
+        if pi.is_negative() {
+            Err(Error::Pi(pi))
+        } else {
+            Ok(Pi(pi))
+        }
+    }
+
+    pub fn with_address(addr: &str) -> Result<Self> {
         let addr_str = CString::new(addr)?;
 
         let pi = unsafe { pigpio_start(addr_str.as_ptr(), ptr::null()) };
@@ -27,7 +37,7 @@ impl Pi {
 
     pub fn with_port(addr: &str, port: u16) -> Result<Self> {
         let addr_str = CString::new(addr)?;
-        let port_str = CString::new(port.to_string())?;
+        let port_str = CString::new(format!("{}", port))?;
 
         let pi = unsafe { pigpio_start(addr_str.as_ptr(), port_str.as_ptr()) };
 

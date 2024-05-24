@@ -1,10 +1,6 @@
-use std::{ffi::CStr, fmt, str::FromStr};
-
-use diesel::serialize::ToSql;
+use std::{ffi::CStr, fmt};
 
 // The all important wrapper
-//
-// Using the newtype pattern
 pub struct W<T>(pub T);
 
 pub trait Wrap: Sized {

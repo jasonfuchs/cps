@@ -206,7 +206,7 @@ impl<'a, const N: usize> ShiftRegisterBuilder<N, &'a str, NoPort, c_uint, c_uint
             ..
         } = self;
 
-        let pi = Pi::new(addr)?;
+        let pi = Pi::with_address(addr)?;
 
         pi.set_mode(ds, pigpiod_if2::PI_INPUT)?;
         pi.set_mode(sh_cp, pigpiod_if2::PI_INPUT)?;
