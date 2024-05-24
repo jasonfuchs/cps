@@ -196,6 +196,27 @@ impl<const N: usize, Addr, Port, Ds, ShCp, StCp>
     }
 }
 
+impl<const N: usize> ShiftRegisterBuilder<N, NoAddr, NoPort, c_uint, c_uint, c_uint> {
+    pub fn build(self) -> Result<ShiftRegister<N>> {
+        let Self {
+            ds, sh_cp, st_cp, ..
+        } = self;
+
+        let pi = Pi::new()?;
+
+        pi.set_mode(ds, pigpiod_if2::PI_INPUT)?;
+        pi.set_mode(sh_cp, pigpiod_if2::PI_INPUT)?;
+        pi.set_mode(st_cp, pigpiod_if2::PI_INPUT)?;
+
+        Ok(ShiftRegister {
+            pi,
+            ds,
+            sh_cp,
+            st_cp,
+        })
+    }
+}
+
 impl<'a, const N: usize> ShiftRegisterBuilder<N, &'a str, NoPort, c_uint, c_uint, c_uint> {
     pub fn build(self) -> Result<ShiftRegister<N>> {
         let Self {
@@ -231,7 +252,7 @@ impl<'a, const N: usize> ShiftRegisterBuilder<N, &'a str, u16, c_uint, c_uint, c
             st_cp,
         } = self;
 
-        let pi = Pi::with_port(addr, port)?;
+        let pi = Pi::with_address_and_port(addr, port)?;
 
         pi.set_mode(ds, pigpiod_if2::PI_INPUT)?;
         pi.set_mode(sh_cp, pigpiod_if2::PI_INPUT)?;

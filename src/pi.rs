@@ -1,5 +1,5 @@
 use std::{
-    ffi::{c_int, c_uint, CString},
+    ffi::{c_int, c_uint, CStr, CString},
     io,
     path::Path,
     ptr,
@@ -24,9 +24,11 @@ impl Pi {
     }
 
     pub fn with_address(addr: &str) -> Result<Self> {
-        let addr_str = CString::new(addr)?;
+        Self::_with_address(&CString::new(addr)?)
+    }
 
-        let pi = unsafe { pigpio_start(addr_str.as_ptr(), ptr::null()) };
+    fn _with_address(addr: &CStr) -> Result<Self> {
+        let pi = unsafe { pigpio_start(addr.as_ptr(), ptr::null()) };
 
         if pi.is_negative() {
             Err(Error::Pi(pi))
@@ -35,11 +37,12 @@ impl Pi {
         }
     }
 
-    pub fn with_port(addr: &str, port: u16) -> Result<Self> {
-        let addr_str = CString::new(addr)?;
-        let port_str = CString::new(format!("{}", port))?;
+    pub fn with_address_and_port(addr: &str, port: u16) -> Result<Self> {
+        Self::_with_address_and_port(&CString::new(addr)?, &CString::new(format!("{}", port))?)
+    }
 
-        let pi = unsafe { pigpio_start(addr_str.as_ptr(), port_str.as_ptr()) };
+    fn _with_address_and_port(addr: &CStr, port: &CStr) -> Result<Self> {
+        let pi = unsafe { pigpio_start(addr.as_ptr(), port.as_ptr()) };
 
         if pi.is_negative() {
             Err(Error::Pi(pi))
@@ -94,7 +97,7 @@ impl Pi {
         let bytes = unsafe {
             file_read(
                 self.0,
-                file.handle(),
+                file.handle,
                 buf.as_mut_ptr().cast(),
                 buf.len() as c_uint,
             )
@@ -108,7 +111,7 @@ impl Pi {
     }
 
     pub fn file_close(&self, file: &File) -> Result<()> {
-        let result = unsafe { file_close(self.0, file.handle()) };
+        let result = unsafe { file_close(self.0, file.handle) };
 
         if result.is_negative() {
             Err(Error::Pi(result))
@@ -126,23 +129,21 @@ impl Drop for Pi {
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct File<'a> {
-    handle: c_uint,
     pi: &'a Pi,
+    handle: c_uint,
 }
 
 impl<'a> File<'a> {
-    pub fn handle(&self) -> c_uint {
-        self.handle
-    }
-
     pub fn read<const N: usize>(&self) -> Result<String> {
-        let mut buf: [u8; N] = [0; N];
+        let mut buf = [0; N];
 
         let bytes = self.pi.file_read(self, &mut buf)?;
 
-        let content = unsafe { CString::from_vec_unchecked(buf.into_iter().take(bytes).collect()) };
+        let v = buf.into_iter().take(bytes).collect();
 
-        Ok(content.to_str()?.to_string())
+        let content = unsafe { CString::from_vec_unchecked(v) };
+
+        Ok(content.into_string()?)
     }
 }
 

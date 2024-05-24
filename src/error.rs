@@ -1,5 +1,6 @@
 use std::{
-    ffi::{c_int, CStr, NulError},
+    ffi::{c_int, CStr, IntoStringError, NulError},
+    fmt,
     str::Utf8Error,
 };
 
@@ -22,6 +23,12 @@ impl From<NulError> for Error {
 
 impl From<Utf8Error> for Error {
     fn from(value: Utf8Error) -> Self {
+        Self::other(value)
+    }
+}
+
+impl From<IntoStringError> for Error {
+    fn from(value: IntoStringError) -> Self {
         Self::other(value)
     }
 }
@@ -401,8 +408,8 @@ impl Error {
     }
 }
 
-impl std::fmt::Display for Error {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             Self::Pi(code) => {
                 let detail = unsafe { CStr::from_ptr(pigpio_error(*code)) };

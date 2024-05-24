@@ -20,14 +20,14 @@ fn main() -> anyhow::Result<()> {
         let temp = file
             .read::<16>()?
             .chars()
-            .filter(|&c| c != '\n')
+            .take_while(|&c| c != '\n')
             .collect::<String>()
             .parse::<f32>()?
             / 1000.0;
 
         let width = 4 - temp.to_string().chars().take_while(|&c| c != '.').count();
 
-        sh_reg.display(format!("{temp:.width$}", width = width))?;
+        sh_reg.display(format!("{:.width$}", temp, width = width))?;
 
         {
             use cps::schema::temperatures::dsl::*;
@@ -37,7 +37,7 @@ fn main() -> anyhow::Result<()> {
                 .returning(Temperature::as_returning())
                 .get_result(&mut conn)?;
 
-            println!("{row}");
+            println!("{}", row);
         }
     }
 }
