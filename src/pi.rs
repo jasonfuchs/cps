@@ -80,14 +80,20 @@ impl Pi {
         }
     }
 
-    pub fn file_read(&self, file: &File, buf: &mut [c_char]) -> Result<usize> {
-        let read =
-            unsafe { file_read(self.0, file.handle(), buf.as_mut_ptr(), buf.len() as c_uint) };
+    pub fn file_read(&self, file: &File, buf: &mut [u8]) -> Result<usize> {
+        let bytes = unsafe {
+            file_read(
+                self.0,
+                file.handle(),
+                buf.as_mut_ptr().cast(),
+                buf.len() as c_uint,
+            )
+        };
 
-        if read.is_negative() {
-            return Err(Error::Pi(read));
+        if bytes.is_negative() {
+            Err(Error::Pi(bytes))
         } else {
-            Ok(read as usize)
+            Ok(bytes as usize)
         }
     }
 
@@ -95,7 +101,7 @@ impl Pi {
         let result = unsafe { file_close(self.0, file.handle()) };
 
         if result.is_negative() {
-            return Err(Error::Pi(result));
+            Err(Error::Pi(result))
         } else {
             Ok(())
         }
@@ -120,26 +126,13 @@ impl<'a> File<'a> {
     }
 
     pub fn read<const N: usize>(&self) -> Result<String> {
-        let mut buf: [c_char; N] = [0; N];
+        let mut buf: [u8; N] = [0; N];
 
-        self.pi.file_read(self, &mut buf)?;
+        let bytes = self.pi.file_read(self, &mut buf)?;
 
-        let content = unsafe {
-            CString::from_vec_unchecked(
-                buf.into_iter()
-                    .filter(|&c| c != 0)
-                    .map(|c| c as u8)
-                    .collect(),
-            )
-        };
+        let content = unsafe { CString::from_vec_unchecked(buf.into_iter().take(bytes).collect()) };
 
         Ok(content.to_str()?.to_string())
-    }
-
-    pub fn read_vec(&self, n: usize) -> Result<Vec<c_char>> {
-        let mut buf = Vec::<c_char>::with_capacity(n);
-
-        todo!()
     }
 }
 
@@ -151,8 +144,6 @@ impl<'a> Drop for File<'a> {
 
 impl<'a> io::Read for File<'a> {
     fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
-        self.pi
-            .file_read(self, unsafe { mem::transmute(buf) })
-            .map_err(|err| io::Error::other(err))
+        self.pi.file_read(self, buf).map_err(io::Error::other)
     }
 }
