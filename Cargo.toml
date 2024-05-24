@@ -9,4 +9,5 @@ anyhow = "1.0.83"
 chrono = "0.4.38"
 clap = { version = "4.5.4", features = ["derive"] }
 diesel = { version = "2.1.6", default-features = false, features = ["sqlite", "chrono", "returning_clauses_for_sqlite_3_35"] }
+libc = "0.2.155"
 pigpiod_if2 = { version = "0.1.0", path = "pigpiod_if2-sys", package = "pigpiod_if2-sys" }
