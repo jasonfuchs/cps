@@ -1,21 +1,57 @@
+use std::{ffi::c_uint, path::PathBuf};
+
+use clap::Parser;
 use cps::prelude::*;
 use diesel::prelude::*;
 
+#[derive(Parser, Debug)]
+struct Args {
+    addr: String,
+    #[arg(short, long)]
+    port: Option<u16>,
+    #[arg(short = 'i', long)]
+    ds: Option<c_uint>,
+    #[arg(short, long)]
+    sh_cp: Option<c_uint>,
+    #[arg(short = 'l', long)]
+    st_cp: Option<c_uint>,
+    #[arg(short, long)]
+    db: Option<String>,
+    #[arg(short = 'f', long)]
+    dev: Option<String>,
+}
+
 fn main() -> anyhow::Result<()> {
+    let args = Args::parse();
+
     let sh_reg = ShiftRegister::<4>::builder()
-        .addr("rpi07")
-        .ds(17)
-        .sh_cp(22)
-        .st_cp(27)
+        .addr(&args.addr)
+        .port(args.port.unwrap_or(8888))
+        .ds(args.ds.unwrap_or(17))
+        .sh_cp(args.sh_cp.unwrap_or(22))
+        .st_cp(args.st_cp.unwrap_or(27))
         .build()?;
 
-    let mut conn = SqliteConnection::establish("./diesel.db")?;
+    let mut conn = SqliteConnection::establish(
+        args.db
+            .as_ref()
+            .map(String::as_str)
+            .unwrap_or("./diesel.db"),
+    )?;
 
     loop {
-        let file = sh_reg.get_ref().file_open(
-            "/sys/bus/w1/devices/10-00080253aa82/temperature",
-            pigpiod_if2::PI_FILE_READ,
-        )?;
+        let path = PathBuf::from("/sys/bus/w1/devices")
+            .join(
+                args.dev
+                    .as_ref()
+                    .map(String::as_str)
+                    .unwrap_or("10-00080253aa82"),
+            )
+            .join("temperature");
+
+        let file = sh_reg
+            .get_ref()
+            .file_open(path, pigpiod_if2::PI_FILE_READ)?;
 
         let temp = file
             .read::<16>()?
@@ -37,7 +73,7 @@ fn main() -> anyhow::Result<()> {
                 .returning(Temperature::as_returning())
                 .get_result(&mut conn)?;
 
-            println!("{}", row);
+            println!("{:?}", row);
         }
     }
 }
