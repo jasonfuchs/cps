@@ -39,19 +39,19 @@ fn main() -> anyhow::Result<()> {
             .unwrap_or("./diesel.db"),
     )?;
 
-    loop {
-        let path = PathBuf::from("/sys/bus/w1/devices")
-            .join(
-                args.dev
-                    .as_ref()
-                    .map(String::as_str)
-                    .unwrap_or("10-00080253aa82"),
-            )
-            .join("temperature");
+    let path = PathBuf::from("/sys/bus/w1/devices")
+        .join(
+            args.dev
+                .as_ref()
+                .map(String::as_str)
+                .unwrap_or("10-00080253aa82"),
+        )
+        .join("temperature");
 
+    loop {
         let file = sh_reg
             .get_ref()
-            .file_open(path, pigpiod_if2::PI_FILE_READ)?;
+            .file_open(&path, pigpiod_if2::PI_FILE_READ)?;
 
         let temp = file
             .read::<16>()?
@@ -73,7 +73,7 @@ fn main() -> anyhow::Result<()> {
                 .returning(Temperature::as_returning())
                 .get_result(&mut conn)?;
 
-            println!("{:?}", row);
+            println!("{}", row);
         }
     }
 }
