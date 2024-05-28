@@ -39,7 +39,7 @@ impl Display for Temperature {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         write!(
             f,
-            "| {} | {} | {} |",
+            "| {:>4} | {:>6.3} | {} |",
             self.id, self.temperature, self.created_at
         )
     }
@@ -47,6 +47,9 @@ impl Display for Temperature {
 
 impl Temperature {
     pub fn to_csv(&self) -> String {
-        format!("{},{},{}", self.id, self.temperature, self.created_at)
+        format!(
+            "{:>4},{:>6.3},{}",
+            self.id, self.temperature, self.created_at
+        )
     }
 }
