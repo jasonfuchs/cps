@@ -21,8 +21,16 @@ struct Args {
     dev: Option<String>,
     #[arg(short = 'c', long = "count", name = "COUNT")]
     count: Option<NonZeroU32>,
-    #[arg(short = 'f', long = "format", name = "FORMAT")]
-    format: Option<String>,
+    #[arg(short = 'f', long = "format", name = "FORMAT", value_enum)]
+    format: Option<Format>,
+}
+
+#[derive(clap::ValueEnum, Debug, Clone, Copy)]
+enum Format {
+    #[value(name = "txt")]
+    PlainText,
+    #[value(name = "csv")]
+    CommaSeperatedValues,
 }
 
 fn main() -> anyhow::Result<()> {
@@ -83,10 +91,9 @@ fn main() -> anyhow::Result<()> {
                 .returning(Temperature::as_returning())
                 .get_result(conn)?;
 
-            match args.format.as_ref().map(String::as_str).unwrap_or("txt") {
-                "txt" | "plain" => println!("{}", row),
-                "csv" => println!("{}", row.to_csv()),
-                format => Err(Error::other(format!("{}: unknown format", format)))?,
+            match args.format.unwrap_or(Format::PlainText) {
+                Format::PlainText => println!("{}", row),
+                Format::CommaSeperatedValues => println!("{}", row.to_csv()),
             }
         }
 
