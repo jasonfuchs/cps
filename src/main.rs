@@ -13,7 +13,7 @@ struct Args {
     ds: Option<c_uint>,
     #[arg(short = 's', long = "shift", name = "SHIFT_PIN")]
     sh_cp: Option<c_uint>,
-    #[arg(short = 'l', long = "ladge", name = "LADGE_PIN")]
+    #[arg(short = 'l', long = "latch", name = "LATCH_PIN")]
     st_cp: Option<c_uint>,
     #[arg(short = 'u', long = "url", name = "DATABASE_URL")]
     db: Option<String>,
