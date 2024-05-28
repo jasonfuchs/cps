@@ -1,4 +1,4 @@
-use std::fmt::{Display, Formatter};
+use std::fmt::{self, Display, Formatter};
 
 use chrono::prelude::*;
 use diesel::prelude::*;
@@ -18,6 +18,14 @@ impl From<f32> for NewTemperature {
     }
 }
 
+impl From<&Temperature> for NewTemperature {
+    fn from(value: &Temperature) -> Self {
+        Self {
+            temperature: value.temperature,
+        }
+    }
+}
+
 #[derive(Queryable, Selectable, Debug, PartialEq, PartialOrd)]
 #[diesel(table_name = temperatures)]
 #[diesel(check_for_backend(diesel::sqlite::Sqlite))]
@@ -28,7 +36,17 @@ pub struct Temperature {
 }
 
 impl Display for Temperature {
-    fn fmt(&self, f: &mut Formatter) -> Result<(), std::fmt::Error> {
-        write!(f, "|{}|{}|{}|", self.id, self.temperature, self.created_at)
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        write!(
+            f,
+            "| {} | {} | {} |",
+            self.id, self.temperature, self.created_at
+        )
+    }
+}
+
+impl Temperature {
+    pub fn to_csv(&self) -> String {
+        format!("{},{},{}", self.id, self.temperature, self.created_at)
     }
 }

@@ -1,28 +1,32 @@
-use std::{ffi::c_uint, path::PathBuf};
+use std::{ffi::c_uint, num::NonZeroU32, path::PathBuf};
 
-use clap::Parser;
 use cps::prelude::*;
 use diesel::prelude::*;
 
-#[derive(Parser, Debug)]
+#[derive(clap::Parser, Debug)]
 struct Args {
+    #[arg(name = "ADDRESS")]
     addr: String,
-    #[arg(short, long)]
+    #[arg(short = 'p', long = "port", name = "PORT")]
     port: Option<u16>,
-    #[arg(short = 'i', long)]
+    #[arg(short = 'i', long = "input", name = "INPUT_PIN")]
     ds: Option<c_uint>,
-    #[arg(short, long)]
+    #[arg(short = 's', long = "shift", name = "SHIFT_PIN")]
     sh_cp: Option<c_uint>,
-    #[arg(short = 'l', long)]
+    #[arg(short = 'l', long = "ladge", name = "LADGE_PIN")]
     st_cp: Option<c_uint>,
-    #[arg(short, long)]
+    #[arg(short = 'u', long = "url", name = "DATABASE_URL")]
     db: Option<String>,
-    #[arg(short = 'f', long)]
+    #[arg(short = 'd', long = "device", name = "DEVICE")]
     dev: Option<String>,
+    #[arg(short = 'c', long = "count", name = "COUNT")]
+    count: Option<NonZeroU32>,
+    #[arg(short = 'f', long = "format", name = "FORMAT")]
+    format: Option<String>,
 }
 
 fn main() -> anyhow::Result<()> {
-    let args = Args::parse();
+    let args = <Args as clap::Parser>::parse();
 
     let sh_reg = ShiftRegister::<4>::builder()
         .addr(&args.addr)
@@ -48,7 +52,13 @@ fn main() -> anyhow::Result<()> {
         )
         .join("temperature");
 
-    loop {
+    #[inline]
+    fn _loop(
+        args: &Args,
+        sh_reg: &ShiftRegister<4>,
+        conn: &mut SqliteConnection,
+        path: &PathBuf,
+    ) -> anyhow::Result<()> {
         let file = sh_reg
             .get_ref()
             .file_open(&path, pigpiod_if2::PI_FILE_READ)?;
@@ -71,9 +81,24 @@ fn main() -> anyhow::Result<()> {
             let row = diesel::insert_into(temperatures)
                 .values(NewTemperature::from(temp))
                 .returning(Temperature::as_returning())
-                .get_result(&mut conn)?;
+                .get_result(conn)?;
 
-            println!("{}", row);
+            match args.format.as_ref().map(String::as_str).unwrap_or("txt") {
+                "txt" | "plain" => println!("{}", row),
+                "csv" => println!("{}", row.to_csv()),
+                format => Err(Error::other(format!("{}: unknown format", format)))?,
+            }
         }
+
+        Ok(())
+    }
+
+    match args.count {
+        None => loop {
+            _loop(&args, &sh_reg, &mut conn, &path)?;
+        },
+        Some(count) => Ok(for _ in 0..count.into() {
+            _loop(&args, &sh_reg, &mut conn, &path)?
+        }),
     }
 }
