@@ -47,9 +47,6 @@ impl Display for Temperature {
 
 impl Temperature {
     pub fn to_csv(&self) -> String {
-        format!(
-            "{:>4},{:>6.3},{}",
-            self.id, self.temperature, self.created_at
-        )
+        format!("{},{},{}", self.id, self.temperature, self.created_at)
     }
 }

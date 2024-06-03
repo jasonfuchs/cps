@@ -85,7 +85,7 @@ impl Pi {
         if handle.is_negative() {
             Err(Error::Pi(handle))
         } else {
-            Ok(File(handle as c_uint, &self))
+            Ok(File(handle as c_uint, self))
         }
     }
 

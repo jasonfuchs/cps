@@ -1,4 +1,8 @@
-use std::{ffi::c_uint, num::NonZeroU32, path::PathBuf};
+use std::{
+    ffi::c_uint,
+    num::NonZeroU32,
+    path::{Path, PathBuf},
+};
 
 use cps::prelude::*;
 use diesel::prelude::*;
@@ -44,32 +48,22 @@ fn main() -> anyhow::Result<()> {
         .st_cp(args.st_cp.unwrap_or(27))
         .build()?;
 
-    let mut conn = SqliteConnection::establish(
-        args.db
-            .as_ref()
-            .map(String::as_str)
-            .unwrap_or("./diesel.db"),
-    )?;
+    let mut conn = SqliteConnection::establish(args.db.as_deref().unwrap_or("./diesel.db"))?;
 
     let path = PathBuf::from("/sys/bus/w1/devices")
-        .join(
-            args.dev
-                .as_ref()
-                .map(String::as_str)
-                .unwrap_or("10-00080253aa82"),
-        )
+        .join(args.dev.as_deref().unwrap_or("10-00080253aa82"))
         .join("temperature");
 
     #[inline]
-    fn _loop(
+    fn _loop<const N: usize>(
         args: &Args,
-        sh_reg: &ShiftRegister<4>,
+        sh_reg: &ShiftRegister<N>,
         conn: &mut SqliteConnection,
-        path: &PathBuf,
+        path: &Path,
     ) -> anyhow::Result<()> {
         let file = sh_reg
             .get_ref()
-            .file_open(&path, pigpiod_if2::PI_FILE_READ)?;
+            .file_open(path, pigpiod_if2::PI_FILE_READ)?;
 
         let temp = file
             .read::<16>()?
@@ -79,22 +73,22 @@ fn main() -> anyhow::Result<()> {
             .parse::<f32>()?
             / 1000.0;
 
-        let width = 4 - temp.to_string().chars().take_while(|&c| c != '.').count();
+        let width = N - temp.to_string().chars().take_while(|&c| c != '.').count();
 
         sh_reg.display(format!("{:.width$}", temp, width = width))?;
 
-        {
+        let row = {
             use cps::schema::temperatures::dsl::*;
 
-            let row = diesel::insert_into(temperatures)
+            diesel::insert_into(temperatures)
                 .values(NewTemperature::from(temp))
                 .returning(Temperature::as_returning())
-                .get_result(conn)?;
+                .get_result(conn)?
+        };
 
-            match args.format.unwrap_or(Format::PlainText) {
-                Format::PlainText => println!("{}", row),
-                Format::CommaSeperatedValues => println!("{}", row.to_csv()),
-            }
+        match args.format.unwrap_or(Format::PlainText) {
+            Format::PlainText => println!("{}", row),
+            Format::CommaSeperatedValues => println!("{}", row.to_csv()),
         }
 
         Ok(())
@@ -104,8 +98,11 @@ fn main() -> anyhow::Result<()> {
         None => loop {
             _loop(&args, &sh_reg, &mut conn, &path)?;
         },
-        Some(count) => Ok(for _ in 0..count.into() {
-            _loop(&args, &sh_reg, &mut conn, &path)?
-        }),
+        Some(count) => {
+            for _ in 0..count.into() {
+                _loop(&args, &sh_reg, &mut conn, &path)?
+            }
+            Ok(())
+        }
     }
 }
