@@ -1,3 +1,4 @@
+use std::array;
 use std::error;
 use std::ffi;
 use std::fmt;
@@ -60,6 +61,12 @@ impl From<Error> for io::Error {
 
 impl From<io::Error> for Error {
     fn from(error: io::Error) -> Self {
+        Self::other(error)
+    }
+}
+
+impl From<array::TryFromSliceError> for Error {
+    fn from(error: array::TryFromSliceError) -> Self {
         Self::other(error)
     }
 }

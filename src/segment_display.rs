@@ -1,3 +1,6 @@
+use std::collections;
+use std::fmt;
+
 use crate::prelude::*;
 
 #[derive(Debug)]
@@ -43,8 +46,13 @@ impl SegmentCode {
     }
 }
 
+impl From<SegmentCode> for u8 {
+    fn from(value: SegmentCode) -> Self {
+        value.to_u8()
+    }
+}
+
 static NUMERALS: [u8; 10] = [
-    //.GFE_DCBA
     0b1100_0000, // 0
     0b1111_1001, // 1
     0b1010_0100, // 2
@@ -88,10 +96,44 @@ static LETTERS: [u8; 26] = [
 
 pub trait SegmentDisplay<'a, const N: usize, T> {
     fn shift_register(&self) -> &ShiftRegister<'a, N>;
-    fn parse(value: T) -> Result<[u8; N]>;
+    fn parse(value: T) -> [u8; N];
 
     fn write(&self, value: T) -> Result<()> {
-        self.shift_register().push_arr(Self::parse(value)?)?;
+        self.shift_register().push_arr(Self::parse(value))?;
         Ok(())
+    }
+}
+
+impl<'a, const N: usize, T> SegmentDisplay<'a, N, T> for ShiftRegister<'a, N>
+where
+    T: fmt::Display,
+{
+    fn shift_register(&self) -> &ShiftRegister<'a, N> {
+        self
+    }
+
+    fn parse(value: T) -> [u8; N] {
+        let string = format!("{value}");
+
+        let left = string.chars();
+        let mut right = string.chars();
+        let first = right.next();
+        let right = right.chain(first);
+
+        let both = left.zip(right);
+
+        let mut deque = both
+            .map(SegmentCode::new)
+            .flatten()
+            .take(N)
+            .map(SegmentCode::into)
+            .collect::<collections::VecDeque<u8>>();
+
+        while deque.len() < N {
+            deque.push_front(0b1111_1111);
+        }
+
+        // can't fail
+        deque.make_contiguous().try_into().unwrap()
     }
 }
