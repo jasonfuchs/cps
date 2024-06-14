@@ -16,27 +16,29 @@ impl SegmentCode {
         }
     }
 
+    #[inline]
+    fn char_to_segment_code(c: char) -> u8 {
+        let ascii = c.to_ascii_uppercase() as u8;
+        if c.is_ascii_digit() {
+            let i = ascii - ('0' as u8);
+            NUMERALS[i as usize]
+        } else if c.is_ascii_alphabetic() {
+            let i = ascii - ('A' as u8);
+            LETTERS[i as usize]
+        } else {
+            match c {
+                ' ' => 0b1111_1111,
+                '-' => 0b1011_1111,
+                '_' => 0b1111_0111,
+                _ => 0b1111_1111,
+            }
+        }
+    }
+
     pub fn to_u8(&self) -> u8 {
         match self {
-            Self::WithDot(c) => Self::Just(*c).to_u8() & 0b0111_1111,
-            Self::Just(c) => {
-                let c = c.to_ascii_uppercase();
-                let ascii = c as u8;
-                if c.is_ascii_digit() {
-                    let i = ascii - ('0' as u8);
-                    NUMERALS[i as usize]
-                } else if c.is_ascii_alphabetic() {
-                    let i = ascii - ('A' as u8);
-                    LETTERS[i as usize]
-                } else {
-                    match c {
-                        ' ' => 0b1111_1111,
-                        '-' => 0b1011_1111,
-                        '_' => 0b1111_0111,
-                        _ => 0b1111_1111,
-                    }
-                }
-            }
+            Self::WithDot(c) => Self::char_to_segment_code(*c) & 0b0111_1111,
+            Self::Just(c) => Self::char_to_segment_code(*c),
         }
     }
 }
