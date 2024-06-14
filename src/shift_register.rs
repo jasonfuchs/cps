@@ -51,7 +51,7 @@ impl<'a, const N: usize> ShiftRegister<'a, N> {
         Ok(())
     }
 
-    pub fn push_n(&self, bytes: &[u8; N]) -> Result<()> {
+    pub fn push_slice(&self, bytes: &[u8]) -> Result<()> {
         for byte in bytes {
             self.push(*byte)?;
         }
@@ -59,8 +59,16 @@ impl<'a, const N: usize> ShiftRegister<'a, N> {
         Ok(())
     }
 
+    pub fn push_arr(&self, bytes: [u8; N]) -> Result<()> {
+        for byte in bytes {
+            self.push(byte)?;
+        }
+
+        Ok(())
+    }
+
     pub fn clear(&self) -> Result<()> {
-        self.push_n(&[0; N])?;
+        self.push_arr([0; N])?;
         Ok(())
     }
 }
@@ -70,11 +78,11 @@ pub struct NoDs;
 pub struct NoShCp;
 pub struct NoStCp;
 #[derive(Debug)]
-pub struct ShiftRegisterBuilder<const N: usize, T, U, S, L> {
+pub struct ShiftRegisterBuilder<const N: usize, T, U, V, W> {
     pi: T,
     ds: U,
-    sh_cp: S,
-    st_cp: L,
+    sh_cp: V,
+    st_cp: W,
 }
 
 impl<const N: usize, T, U, V, W> ShiftRegisterBuilder<N, T, U, V, W> {
