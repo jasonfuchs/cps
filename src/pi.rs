@@ -240,8 +240,10 @@ impl Pi<Init> {
         Ok(count as usize)
     }
 
-    fn file_close(&self, handle: &Handle) {
-        unsafe { pigpiod_if2::file_close(self.0 .0, handle.0) };
+    /// # SAFTEY
+    /// * Caller mustn't use handle after calling this function.
+    unsafe fn file_close(&self, handle: &Handle) {
+        pigpiod_if2::file_close(self.0 .0, handle.0);
     }
 }
 
@@ -286,7 +288,7 @@ impl<'a> io::Read for File<'a> {
 
 impl<'a> Drop for File<'a> {
     fn drop(&mut self) {
-        self.pi.file_close(&self.handle)
+        unsafe { self.pi.file_close(&self.handle) };
     }
 }
 
