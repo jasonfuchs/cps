@@ -17,7 +17,7 @@ impl From<f32> for NewTemperature {
     }
 }
 
-#[derive(Selectable, Debug)]
+#[derive(Queryable, Selectable, Debug)]
 #[diesel(table_name = crate::schema::temperatures)]
 #[diesel(check_for_backend(diesel::sqlite::Sqlite))]
 pub struct Temperature {
