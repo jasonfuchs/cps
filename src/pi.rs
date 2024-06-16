@@ -113,14 +113,17 @@ impl<'a> Pi<Uninit<'a>> {
             // swap Option<Result> -> Result<Option>
             .map_or(Ok(None), |a| a.map(Some))?
             .as_deref()
-            .map_or(ptr::null(), ffi::CStr::as_ptr);
+            .map_or(ptr::null(), ffi::CStr::as_ptr)
+            .cast_mut();
 
         let port_str = port
             .map(ffi::CString::new)
             .map_or(Ok(None), |p| p.map(Some))?
             .as_deref()
-            .map_or(ptr::null(), ffi::CStr::as_ptr);
+            .map_or(ptr::null(), ffi::CStr::as_ptr)
+            .cast_mut();
 
+        // WHY DOES THIS NEED TO BE MUTABLE!?
         let pi = unsafe { pigpiod_if2::pigpio_start(addr_str, port_str) };
 
         if pi.is_negative() {
@@ -136,6 +139,7 @@ pub struct Gpio(ffi::c_uint);
 
 impl Gpio {
     pub fn new(gpio: ffi::c_uint) -> Option<Self> {
+        // documentation says only 0-53 allowed
         if gpio > 53 {
             return None;
         }
@@ -157,11 +161,11 @@ pub enum GpioLevel {
 }
 
 impl Pi<Init> {
-    pub fn with_addr(addr: &str) -> Result<Self> {
+    pub fn try_with_addr(addr: &str) -> Result<Self> {
         Pi::new().addr(addr).connect()
     }
 
-    pub fn with_addr_and_port(addr: &str, port: &str) -> Result<Self> {
+    pub fn try_with_addr_and_port(addr: &str, port: &str) -> Result<Self> {
         Pi::new().addr(addr).port(port).connect()
     }
 
