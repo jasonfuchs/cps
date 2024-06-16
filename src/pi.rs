@@ -3,9 +3,11 @@ use std::error;
 use std::ffi;
 use std::fmt;
 use std::io;
+use std::num;
 use std::path;
 use std::ptr;
 use std::result;
+use std::str;
 
 #[derive(Debug)]
 pub enum Error {
@@ -67,6 +69,12 @@ impl From<io::Error> for Error {
 
 impl From<array::TryFromSliceError> for Error {
     fn from(error: array::TryFromSliceError) -> Self {
+        Self::other(error)
+    }
+}
+
+impl From<num::ParseIntError> for Error {
+    fn from(error: num::ParseIntError) -> Self {
         Self::other(error)
     }
 }
@@ -145,6 +153,17 @@ impl Gpio {
         }
 
         Some(Gpio(gpio))
+    }
+}
+
+// needed for command line argument parsing
+impl str::FromStr for Gpio {
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Self> {
+        let raw = s.parse::<ffi::c_uint>()?;
+        let gpio = Gpio::new(raw).ok_or(Error::new(pigpiod_if2::PI_BAD_GPIO))?;
+        Ok(gpio)
     }
 }
 
