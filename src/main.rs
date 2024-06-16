@@ -2,4 +2,8 @@ mod cli;
 mod model;
 mod schema;
 
-fn main() {}
+fn main() {
+    use clap::Parser;
+    use cli::Args;
+    Args::parse();
+}
