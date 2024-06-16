@@ -23,10 +23,10 @@ impl SegmentCode {
     fn char_to_segment_code(c: char) -> u8 {
         let ascii = c.to_ascii_uppercase() as u8;
         if c.is_ascii_digit() {
-            let i = ascii - ('0' as u8);
+            let i = ascii - b'0';
             NUMERALS[i as usize]
         } else if c.is_ascii_alphabetic() {
-            let i = ascii - ('A' as u8);
+            let i = ascii - b'A';
             LETTERS[i as usize]
         } else {
             match c {
@@ -123,8 +123,7 @@ where
         let both = left.zip(right);
 
         let mut deque = both
-            .map(SegmentCode::new)
-            .flatten()
+            .filter_map(SegmentCode::new)
             .take(N)
             .map(SegmentCode::into)
             .collect::<collections::VecDeque<u8>>();
