@@ -32,8 +32,8 @@ fn main() -> Result<()> {
         .join(&args.device)
         .join("temperature");
 
-    // for now no count
-    loop {
+    let mut i = 0;
+    while args.count.map(usize::from).map_or(true, |count| i < count) {
         let temperature = read_to_string(&pi, &path)?
             .chars()
             .take_while(|&c| c != '\n')
@@ -63,5 +63,9 @@ fn main() -> Result<()> {
             Format::PlainText => println!("{row}"),
             Format::CommaSeperatedValues => println!("{}", row.to_csv()),
         }
+
+        i += 1;
     }
+
+    Ok(())
 }

@@ -33,7 +33,7 @@ pub struct Args {
     pub device: String,
     #[arg(short, long)]
     #[arg(help = "Stop after <COUNT> requests")]
-    pub count: Option<num::NonZeroU32>,
+    pub count: Option<num::NonZeroUsize>,
     #[arg(short, long)]
     #[arg(help = "Output format")]
     #[arg(default_value = "txt")]
