@@ -243,12 +243,10 @@ impl Pi<Init> {
     }
 
     fn file_open(&self, path: &path::Path, mode: FileMode) -> Result<Handle> {
-        // TODO use monomorphisation
-        let path = ffi::CString::new(path.to_string_lossy().as_bytes())?;
+        let filestr = ffi::CString::new(path.to_string_lossy().as_bytes())?;
+        let pfile = filestr.as_ptr().cast_mut();
 
-        let file = path.as_ptr().cast_mut();
-
-        let handle = unsafe { pigpiod_if2::file_open(self.0 .0, file, mode as ffi::c_uint) };
+        let handle = unsafe { pigpiod_if2::file_open(self.0 .0, pfile, mode as ffi::c_uint) };
 
         if handle.is_negative() {
             return Err(Error::new(handle));
@@ -258,14 +256,10 @@ impl Pi<Init> {
     }
 
     fn file_read(&self, handle: &Handle, buf: &mut [u8]) -> Result<usize> {
-        let count = unsafe {
-            pigpiod_if2::file_read(
-                self.0 .0,
-                handle.0,
-                buf.as_mut_ptr().cast(),
-                buf.len() as ffi::c_uint,
-            )
-        };
+        let pbuf = buf.as_mut_ptr().cast();
+        let buflen = buf.len() as ffi::c_uint;
+
+        let count = unsafe { pigpiod_if2::file_read(self.0 .0, handle.0, pbuf, buflen) };
 
         if count.is_negative() {
             return Err(Error::new(count));
@@ -274,10 +268,8 @@ impl Pi<Init> {
         Ok(count as usize)
     }
 
-    /// # SAFTEY
-    /// * Caller mustn't use handle after calling this function.
-    unsafe fn file_close(&self, handle: &Handle) {
-        pigpiod_if2::file_close(self.0 .0, handle.0);
+    fn file_close(&self, handle: &Handle) {
+        unsafe { pigpiod_if2::file_close(self.0 .0, handle.0) };
     }
 }
 
@@ -322,7 +314,7 @@ impl<'a> io::Read for File<'a> {
 
 impl<'a> Drop for File<'a> {
     fn drop(&mut self) {
-        unsafe { self.pi.file_close(&self.handle) };
+        self.pi.file_close(&self.handle);
     }
 }
 
