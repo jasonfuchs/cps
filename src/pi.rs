@@ -132,49 +132,47 @@ impl Pi<Uninit<NoAddr, NoPort>> {
 
 impl Pi<Uninit<&str, NoPort>> {
     pub fn connect(self) -> Result<Pi<Init>> {
-        fn inner(addr_str: &ffi::CStr) -> Result<Pi<Init>> {
-            let pi = unsafe { pigpiod_if2::pigpio_start(addr_str.as_ptr(), ptr::null()) };
-
-            if pi.is_negative() {
-                return Err(Error::new(pi));
-            }
-
-            Ok(Pi(Init(pi)))
-        }
         let Uninit { addr, .. } = self.0;
-        inner(&ffi::CString::new(addr)?)
+        let addr_str = ffi::CString::new(addr)?;
+
+        let pi = unsafe { pigpiod_if2::pigpio_start(addr_str.as_ptr(), ptr::null()) };
+
+        if pi.is_negative() {
+            return Err(Error::new(pi));
+        }
+
+        Ok(Pi(Init(pi)))
     }
 }
 
 impl Pi<Uninit<NoAddr, &str>> {
     pub fn connect(self) -> Result<Pi<Init>> {
-        fn inner(port_str: &ffi::CStr) -> Result<Pi<Init>> {
-            let pi = unsafe { pigpiod_if2::pigpio_start(ptr::null(), port_str.as_ptr()) };
-
-            if pi.is_negative() {
-                return Err(Error::new(pi));
-            }
-
-            Ok(Pi(Init(pi)))
-        }
         let Uninit { port, .. } = self.0;
-        inner(&ffi::CString::new(port)?)
+        let port_str = ffi::CString::new(port)?;
+
+        let pi = unsafe { pigpiod_if2::pigpio_start(ptr::null(), port_str.as_ptr()) };
+
+        if pi.is_negative() {
+            return Err(Error::new(pi));
+        }
+
+        Ok(Pi(Init(pi)))
     }
 }
 
 impl Pi<Uninit<&str, &str>> {
     pub fn connect(self) -> Result<Pi<Init>> {
-        fn inner(addr_str: &ffi::CStr, port_str: &ffi::CStr) -> Result<Pi<Init>> {
-            let pi = unsafe { pigpiod_if2::pigpio_start(addr_str.as_ptr(), port_str.as_ptr()) };
-
-            if pi.is_negative() {
-                return Err(Error::new(pi));
-            }
-
-            Ok(Pi(Init(pi)))
-        }
         let Uninit { addr, port } = self.0;
-        inner(&ffi::CString::new(addr)?, &ffi::CString::new(port)?)
+        let addr_str = ffi::CString::new(addr)?;
+        let port_str = ffi::CString::new(port)?;
+
+        let pi = unsafe { pigpiod_if2::pigpio_start(addr_str.as_ptr(), port_str.as_ptr()) };
+
+        if pi.is_negative() {
+            return Err(Error::new(pi));
+        }
+
+        Ok(Pi(Init(pi)))
     }
 }
 
