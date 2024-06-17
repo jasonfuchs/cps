@@ -79,60 +79,75 @@ impl From<num::ParseIntError> for Error {
     }
 }
 
+pub struct NoAddr;
+pub struct NoPort;
 #[derive(Debug)]
-pub struct Uninit<'a> {
-    addr: Option<&'a str>,
-    port: Option<&'a str>,
+pub struct Uninit<A, P> {
+    addr: A,
+    port: P,
 }
 #[derive(Debug)]
 pub struct Init(ffi::c_int);
 #[derive(Debug)]
 pub struct Pi<T>(T);
 
-impl<'a> Pi<Uninit<'a>> {
+impl Pi<Uninit<NoAddr, NoPort>> {
     pub fn new() -> Self {
         Pi(Uninit {
-            addr: None,
-            port: None,
+            addr: NoAddr,
+            port: NoPort,
         })
     }
+}
 
-    pub fn addr(self, addr: &'a str) -> Self {
+impl<A, P> Pi<Uninit<A, P>> {
+    pub fn addr(self, addr: &str) -> Pi<Uninit<&str, P>> {
         let Uninit { port, .. } = self.0;
-        Pi(Uninit {
-            addr: Some(addr),
-            port,
-        })
+        Pi(Uninit { addr, port })
     }
 
-    pub fn port(self, port: &'a str) -> Self {
+    pub fn port(self, port: &str) -> Pi<Uninit<A, &str>> {
         let Uninit { addr, .. } = self.0;
-        Pi(Uninit {
-            addr,
-            port: Some(port),
-        })
+        Pi(Uninit { addr, port })
     }
+}
 
+impl Pi<Uninit<NoAddr, NoPort>> {
+    pub fn connect(self) -> Result<Pi<Init>> {
+        let pi = unsafe { pigpiod_if2::pigpio_start(ptr::null(), ptr::null()) };
+
+        if pi.is_negative() {
+            return Err(Error::new(pi));
+        }
+
+        Ok(Pi(Init(pi)))
+    }
+}
+
+impl Pi<Uninit<&str, NoPort>> {
+    pub fn connect(self) -> Result<Pi<Init>> {
+        let Uninit { addr, .. } = self.0;
+
+        let addr_str = ffi::CString::new(addr)?;
+
+        let pi = unsafe { pigpiod_if2::pigpio_start(addr_str.as_ptr(), ptr::null()) };
+
+        if pi.is_negative() {
+            return Err(Error::new(pi));
+        }
+
+        Ok(Pi(Init(pi)))
+    }
+}
+
+impl Pi<Uninit<&str, &str>> {
     pub fn connect(self) -> Result<Pi<Init>> {
         let Uninit { addr, port } = self.0;
 
-        let addr_str = addr
-            .map(ffi::CString::new)
-            // swap Option<Result> -> Result<Option>
-            .map_or(Ok(None), |a| a.map(Some))?
-            .as_deref()
-            .map_or(ptr::null(), ffi::CStr::as_ptr)
-            .cast_mut();
+        let addr_str = ffi::CString::new(addr)?;
+        let port_str = ffi::CString::new(port)?;
 
-        let port_str = port
-            .map(ffi::CString::new)
-            .map_or(Ok(None), |p| p.map(Some))?
-            .as_deref()
-            .map_or(ptr::null(), ffi::CStr::as_ptr)
-            .cast_mut();
-
-        // WHY DOES THIS NEED TO BE MUTABLE!?
-        let pi = unsafe { pigpiod_if2::pigpio_start(addr_str, port_str) };
+        let pi = unsafe { pigpiod_if2::pigpio_start(addr_str.as_ptr(), port_str.as_ptr()) };
 
         if pi.is_negative() {
             return Err(Error::new(pi));
@@ -185,6 +200,7 @@ impl Pi<Init> {
     }
 
     pub fn try_with_addr_and_port(addr: &str, port: &str) -> Result<Self> {
+        dbg!(addr);
         Pi::new().addr(addr).port(port).connect()
     }
 
