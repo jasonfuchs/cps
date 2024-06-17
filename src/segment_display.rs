@@ -100,6 +100,7 @@ pub trait SegmentDisplay<'a, const N: usize, T> {
 
     fn write(&self, value: T) -> Result<()> {
         self.shift_register().push_arr(Self::parse(value))?;
+        self.shift_register().save()?;
         Ok(())
     }
 }

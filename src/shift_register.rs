@@ -139,9 +139,9 @@ impl<'a, const N: usize> ShiftRegisterBuilder<N, &'a Pi<Init>, Gpio, Gpio, Gpio>
             sh_cp,
             st_cp,
         } = self;
-        pi.set_mode(ds, GpioMode::Output)?;
-        pi.set_mode(sh_cp, GpioMode::Output)?;
-        pi.set_mode(st_cp, GpioMode::Output)?;
+        pi.set_mode(ds, GpioMode::Input)?;
+        pi.set_mode(sh_cp, GpioMode::Input)?;
+        pi.set_mode(st_cp, GpioMode::Input)?;
         Ok(ShiftRegister {
             pi,
             ds,

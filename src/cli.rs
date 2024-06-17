@@ -17,7 +17,7 @@ pub struct Args {
     pub input: Gpio,
     #[arg(short, long)]
     #[arg(help = "Shift pin of shift register")]
-    #[arg(default_value = "21")]
+    #[arg(default_value = "22")]
     pub shift: Gpio,
     #[arg(short, long)]
     #[arg(help = "Latch pin of shift register")]

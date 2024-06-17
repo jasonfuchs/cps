@@ -200,7 +200,6 @@ impl Pi<Init> {
     }
 
     pub fn try_with_addr_and_port(addr: &str, port: &str) -> Result<Self> {
-        dbg!(addr);
         Pi::new().addr(addr).port(port).connect()
     }
 
@@ -225,10 +224,10 @@ impl Pi<Init> {
     }
 
     fn file_open(&self, path: &path::Path, mode: FileMode) -> Result<Handle> {
-        let file = ffi::CString::new(path.to_string_lossy().as_bytes())?
-            .as_ptr()
-            // pigpiod_if2 is poorly written
-            .cast_mut();
+        // TODO use monomorphisation
+        let path = ffi::CString::new(path.to_string_lossy().as_bytes())?;
+
+        let file = path.as_ptr().cast_mut();
 
         let handle = unsafe { pigpiod_if2::file_open(self.0 .0, file, mode as ffi::c_uint) };
 
