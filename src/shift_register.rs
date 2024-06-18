@@ -85,6 +85,23 @@ pub struct ShiftRegisterBuilder<const N: usize, T, U, V, W> {
     st_cp: W,
 }
 
+impl<const N: usize> ShiftRegisterBuilder<N, NoPi, NoDs, NoShCp, NoStCp> {
+    pub fn new() -> Self {
+        ShiftRegisterBuilder {
+            pi: NoPi,
+            ds: NoDs,
+            sh_cp: NoShCp,
+            st_cp: NoStCp,
+        }
+    }
+}
+
+impl<const N: usize> Default for ShiftRegisterBuilder<N, NoPi, NoDs, NoShCp, NoStCp> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<const N: usize, T, U, V, W> ShiftRegisterBuilder<N, T, U, V, W> {
     pub fn pi(self, pi: &Pi<Init>) -> ShiftRegisterBuilder<N, &Pi<Init>, U, V, W> {
         let Self {
