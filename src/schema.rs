@@ -1,9 +1,8 @@
 // @generated automatically by Diesel CLI.
 
 diesel::table! {
-    temperatures (id) {
-        id -> Integer,
-        temperature -> Float,
+    temperatures (created_at) {
         created_at -> Timestamp,
+        temperature -> Float,
     }
 }

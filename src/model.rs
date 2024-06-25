@@ -21,31 +21,28 @@ impl From<f32> for NewTemperature {
 #[diesel(table_name = crate::schema::temperatures)]
 #[diesel(check_for_backend(diesel::sqlite::Sqlite))]
 pub struct Temperature {
-    id: i32,
-    temperature: f32,
     created_at: NaiveDateTime,
+    temperature: f32,
 }
 
 impl Temperature {
     pub fn to_csv(&self) -> String {
         let Self {
-            id,
-            temperature,
             created_at,
+            temperature,
         } = self;
         // convert to seconds (in UTC)
         let created_at = created_at.and_utc().timestamp();
-        format!("{},{},{}", id, temperature, created_at)
+        format!("{},{}", created_at, temperature)
     }
 }
 
 impl fmt::Display for Temperature {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let Self {
-            id,
-            temperature,
             created_at,
+            temperature,
         } = self;
-        write!(f, "|{:>4}|{:>6.3}|{}|", id, temperature, created_at)
+        write!(f, "|{}|{:>6.3}|", created_at, temperature)
     }
 }
