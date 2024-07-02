@@ -1,7 +1,7 @@
 set datafile separator ","
 set timefmt '%s'
 set xdata time
-set format x "%H:%M:%S"
+set format x "%H:%M"
 set ylabel 'Temperature (in °C)'
 set xlabel 'Time'
 
